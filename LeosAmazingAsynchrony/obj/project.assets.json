@@ -12101,7 +12101,7 @@
       "Microsoft.AspNetCore.App >= 2.2.0",
       "Microsoft.AspNetCore.Razor.Design >= 2.2.0",
       "Microsoft.NETCore.App >= 2.2.0",
-      "WindowsAzure.Storage"
+      "WindowsAzure.Storage >= 9.3.3"
     ]
   },
   "packageFolders": {
@@ -12162,7 +12162,7 @@
           },
           "WindowsAzure.Storage": {
             "target": "Package",
-            "version": "(, )"
+            "version": "[9.3.3, )"
           }
         },
         "imports": [
