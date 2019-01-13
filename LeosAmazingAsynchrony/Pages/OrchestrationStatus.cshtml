@@ -1,0 +1,30 @@
+﻿@page
+@model OrchestrationStatusModel
+@{
+  Layout = null;
+}
+
+<table class="table">
+  <tbody>
+    <tr>
+      <td>Status</td>
+      <td>@Model.QueryResult.RuntimeStatus</td>
+    </tr>
+    <tr>
+      <td>Input</td>
+      <td>@Model.QueryResult.Input</td>
+    </tr>
+    <tr>
+      <td>Custom Status</td>
+      <td>@Model.QueryResult.CustomStatus</td>
+    </tr>
+    <tr>
+      <td>Created Time</td>
+      <td>@Model.QueryResult.CreatedTime</td>
+    </tr>
+    <tr>
+      <td>Last Updated Time</td>
+      <td>@Model.QueryResult.LastUpdatedTime</td>
+    </tr>
+  </tbody>
+</table>

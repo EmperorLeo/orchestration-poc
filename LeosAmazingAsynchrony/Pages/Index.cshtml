@@ -1,0 +1,83 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<h1 class="display-4">Orchestration Functions Example</h1>
+@if (TempData.Peek("FileName") != null)
+{
+  <div class="alert alert-success">@TempData["FileName"] successfully uploaded.</div>
+}
+<form method="post" enctype="multipart/form-data">
+  <div class="input-group">
+    <div class="custom-file">
+      <input asp-for="Upload" type="file" class="custom-file-input" id="bulkUploadFile" aria-describedby="bulkUploadFileAddon" accept=".csv">
+      <label asp-for="Upload" class="custom-file-label" for="bulkUploadFile">Choose file</label>
+    </div>
+    <div class="input-group-append">
+      <button class="btn btn-outline-secondary" type="submit" id="bulkUploadFileAddon">Button</button>
+    </div>
+  </div>
+</form>
+@if (ViewData["OrchestrationResult"] != null)
+{
+  var orchestrationResult = ViewData["OrchestrationResult"] as OrchestrationStartResult;
+  <h2>Id for orchestration result is @orchestrationResult.Id</h2>
+  <a href="@orchestrationResult.StatusQueryGetUri" class="btn btn-primary">See JSON</a>
+  <div id="orchestrationStatus"></div>
+  <script>
+    function refresh() {
+      var urlToCall = encodeURIComponent('@orchestrationResult.StatusQueryGetUri');
+      $.ajax({
+        type: 'GET',
+        url: '/OrchestrationStatus?url=' + urlToCall,
+        success: function(result) {
+          $("#orchestrationStatus").html(result);
+          setTimeout(refresh, 500);
+        },
+        error: function(error) {
+          setTimeout(refresh, 500);
+          console.log(error);
+        }
+      })
+    }
+
+    refresh();
+  </script>
+}
+@section Scripts {
+  <script>
+    $('#bulkUploadFile').on('change',function(){
+      var fileName = $(this).val();
+      $(this).next('.custom-file-label').html(fileName);
+    });
+  </script>
+  @if (ViewData["OrchestrationResult"] != null)
+  {
+    var orchestrationResult = ViewData["OrchestrationResult"] as OrchestrationStartResult;
+    <script>
+      function refresh() {
+        var urlToCall = encodeURIComponent('@orchestrationResult.StatusQueryGetUri');
+        $.ajax({
+          type: 'GET',
+          url: '/OrchestrationStatus?url=' + urlToCall,
+          success: function(result, status, req) {
+            $("#orchestrationStatus").html(result);
+            if (req.getResponseHeader('X-Orchestration-Status') === 'Completed') {
+              return
+            }
+            setTimeout(refresh, 500);
+          },
+          error: function(error) {
+            setTimeout(refresh, 500);
+            console.log(error);
+          }
+        });
+      }
+
+      refresh();
+    </script>
+  }
+}
+
