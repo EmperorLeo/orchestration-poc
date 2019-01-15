@@ -27,13 +27,16 @@ namespace LeosFunctions
             var codeMonkeys = await context.CallSubOrchestratorAsync<ICollection<string>>("FileProcessor_WhoIsACodeMonkey", engineers);
             context.SetCustomStatus("Searching superstars...");
             var microserviceSuperstars = await context.CallSubOrchestratorAsync<ICollection<string>>("FileProcessor_WhoIsAMicroserviceSuperstar", engineers.Where(engineer => !codeMonkeys.Contains(engineer)).ToList());
+            context.SetCustomStatus("Leveling lackeys...");
+            var levels = await context.CallSubOrchestratorAsync<Dictionary<string, int>>("FileProcessor_GetLevels", engineers);
 
             context.SetCustomStatus("Transmitting textfile...");
             var resultFileId = await context.CallActivityAsync<string>("FileProcessor_CreateResultsFile", new FileProcessorResult
             {
                 AllEngineers = engineers,
                 CodeMonkeys = codeMonkeys,
-                MicroserviceSuperstars = microserviceSuperstars
+                MicroserviceSuperstars = microserviceSuperstars,
+                Levels = levels
             });
             // returns ["Hello Tokyo!", "Hello Seattle!", "Hello London!"]
             context.SetCustomStatus("Completed");
@@ -89,7 +92,7 @@ namespace LeosFunctions
             await Task.Delay(2000);
             log.LogInformation($"Done validating {engineer}.");
             var random = new Random();
-            return random.Next(20) == 10;
+            return random.Next(20) < 3;
         }
 
         [FunctionName("FileProcessor_WhoIsAMicroserviceSuperstar")]
@@ -124,13 +127,35 @@ namespace LeosFunctions
             await Task.Delay(2000);
             log.LogInformation($"Done validating {engineer}.");
             var random = new Random();
-            return random.Next(30) == 10;
+            return random.Next(30) < 3;
         }
 
         [FunctionName("FileProcessor_CreateResultsFile")]
         public static async Task<string> CreateResultsFile([ActivityTrigger] FileProcessorResult result, ILogger log)
         {
             log.LogInformation("Starting to create results file.");
+            var engineerList = result.AllEngineers.ToList();
+            engineerList.Sort((e1, e2) =>
+            {
+                if (result.CodeMonkeys.Contains(e1) && !result.CodeMonkeys.Contains(e2) || result.MicroserviceSuperstars.Contains(e2) && !result.MicroserviceSuperstars.Contains(e1))
+                {
+                    return 1;
+                }
+                if (result.MicroserviceSuperstars.Contains(e1) && !result.MicroserviceSuperstars.Contains(e2) || result.CodeMonkeys.Contains(e2) && !result.CodeMonkeys.Contains(e1))
+                {
+                    return -1;
+                }
+                if (!result.CodeMonkeys.Contains(e1) && !result.MicroserviceSuperstars.Contains(e1) && result.CodeMonkeys.Contains(e2))
+                {
+                    return -1;
+                }
+                if (!result.CodeMonkeys.Contains(e2) && !result.MicroserviceSuperstars.Contains(e2) && result.CodeMonkeys.Contains(e1))
+                {
+                    return 1;
+                }
+                return result.Levels[e2].CompareTo(result.Levels[e1]);
+            });
+            result.AllEngineers = engineerList;
             var storageAccount = CloudStorageAccount.Parse(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
             var container = storageAccount.CreateCloudBlobClient().GetContainerReference("result-files");
             if (await container.CreateIfNotExistsAsync())
@@ -162,7 +187,7 @@ namespace LeosFunctions
                     {
                         engineerResult = "normal engineer";
                     }
-                    writer.WriteLine($"{engineer} is a {engineerResult}.");
+                    writer.WriteLine($"{engineer} is a level {result.Levels[engineer]} {engineerResult}.");
                     writer.Flush();
                 }
                 memoryStream.Seek(0, SeekOrigin.Begin);
@@ -172,6 +197,45 @@ namespace LeosFunctions
             log.LogInformation("Done creating results file.");
             return $"{resultFileId}.txt";
         }
+
+        [FunctionName("FileProcessor_GetLevels")]
+        public static async Task<Dictionary<string, int>> GetLevels([OrchestrationTrigger] DurableOrchestrationContext context)
+        {
+            var engineers = context.GetInput<List<string>>();
+            var levels = new Dictionary<string, int>();
+            var tasks = engineers
+                .Select(engineer => context.CallActivityWithRetryAsync<int>("FileProcessor_GetLevels_Each", new RetryOptions(TimeSpan.FromMilliseconds(1000), 10), engineer))
+                .ToArray();
+            await Task.WhenAll(tasks);
+            for (var i = 0; i < engineers.Count; i++)
+            {
+                if (!tasks[i].IsFaulted)
+                {
+                    levels.Add(engineers[i], tasks[i].Result);
+                }
+                else
+                {
+                    levels.Add(engineers[i], 0);
+                }
+            }
+            return levels;
+        }
+
+        [FunctionName("FileProcessor_GetLevels_Each")]
+        public static async Task<int> GetLevels_Each([ActivityTrigger] string engineer, ILogger log)
+        {
+            await Task.Delay(1000);
+            var random = new Random();
+            var val = random.Next(10);
+            if (val < 6)
+            {
+                throw new Exception("Random exception!");
+            }
+
+            return random.Next(10) + 1;
+        }
+
+
 
         [FunctionName("FileProcessor_HttpStart")]
         public static async Task<HttpResponseMessage> HttpStart(
