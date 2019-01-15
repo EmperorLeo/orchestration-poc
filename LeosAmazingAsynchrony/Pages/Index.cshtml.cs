@@ -27,7 +27,16 @@ namespace LeosAmazingAsynchrony.Pages
 
         public void OnGet()
         {
-
+            var orchestrationId = (string)TempData.Peek("cur-orchestration-id");
+            if (!string.IsNullOrEmpty(orchestrationId))
+            {
+                var orchestrationResult = new OrchestrationStartResult
+                {
+                    Id = Guid.Parse(orchestrationId),
+                    StatusQueryGetUri = $"{_functionsUrl}/runtime/webhooks/durabletask/instances/{orchestrationId}?taskHub=DurableFunctionsHub&connection=Storage"
+                };
+                ViewData.Add("OrchestrationResult", orchestrationResult);
+            }
         }
 
         [BindProperty]
@@ -52,12 +61,12 @@ namespace LeosAmazingAsynchrony.Pages
                 }
                 using (var client = new HttpClient())
                 {
-                    var result = await client.GetAsync($"{_functionsUrl}?fileId={uniqueId}");
+                    var result = await client.GetAsync($"{_functionsUrl}/api/FileProcessor_HttpStart?fileId={uniqueId}");
                     var orchestrationStartResult = await result.Content.ReadAsAsync<OrchestrationStartResult>();
-                    Console.WriteLine(orchestrationStartResult.Id);
                     ViewData.Add("OrchestrationResult", orchestrationStartResult);
+                    TempData.Add("cur-orchestration-id", orchestrationStartResult.Id.ToString("N"));
                 }
-                TempData.Add("FileName", Upload.FileName);
+                ViewData.Add("FileName", Upload.FileName);
             }
         }
     }

@@ -5,9 +5,9 @@
 }
 
 <h1 class="display-4">Orchestration Functions Example</h1>
-@if (TempData.Peek("FileName") != null)
+@if (ViewData["FileName"] != null)
 {
-  <div class="alert alert-success">@TempData["FileName"] successfully uploaded.</div>
+  <div class="alert alert-success">@ViewData["FileName"] successfully uploaded.</div>
 }
 <form method="post" enctype="multipart/form-data">
   <div class="input-group">
@@ -45,8 +45,9 @@
           url: '/OrchestrationStatus?url=' + urlToCall,
           success: function(result, status, req) {
             $("#orchestrationStatus").html(result);
-            if (req.getResponseHeader('X-Orchestration-Status') === 'Completed') {
-              return
+            if (req.getResponseHeader('X-Orchestration-Status') === 'Completed' || req.getResponseHeader('X-Orchestration-Status') === 'Failed') {
+              document.cookie = 'cur-orchestration-id=; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+              return;
             }
             setTimeout(refresh, 500);
           },

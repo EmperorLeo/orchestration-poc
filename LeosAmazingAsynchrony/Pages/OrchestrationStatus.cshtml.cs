@@ -26,6 +26,10 @@ namespace LeosAmazingAsynchrony.Pages
                 var result = await client.GetAsync(url);
                 QueryResult = await result.Content.ReadAsAsync<OrchestrationQueryResult>();
                 Response.Headers.Add("X-Orchestration-Status", QueryResult.RuntimeStatus);
+                if (QueryResult.RuntimeStatus == "Completed" || QueryResult.RuntimeStatus == "Failed")
+                {
+                    TempData.Remove("cur-orchestration-id");
+                }
                 if (!string.IsNullOrEmpty(QueryResult.Output))
                 {
                     Response.Headers.Add("X-Orchestration-Output", $"{ResultsFileUrl}/{QueryResult.Output}");
