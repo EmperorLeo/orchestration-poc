@@ -12,11 +12,11 @@
 <form method="post" enctype="multipart/form-data">
   <div class="input-group">
     <div class="custom-file">
-      <input asp-for="Upload" type="file" class="custom-file-input" id="bulkUploadFile" aria-describedby="bulkUploadFileAddon" accept=".csv">
+      <input asp-for="Upload" type="file" class="custom-file-input" id="bulkUploadFile" aria-describedby="bulkUploadFileAddon" accept=".txt">
       <label asp-for="Upload" class="custom-file-label" for="bulkUploadFile">Choose file</label>
     </div>
     <div class="input-group-append">
-      <button class="btn btn-outline-secondary" type="submit" id="bulkUploadFileAddon">Button</button>
+      <button class="btn btn-outline-danger" type="submit" id="bulkUploadFileAddon">Upload</button>
     </div>
   </div>
 </form>
@@ -26,25 +26,6 @@
   <h2>Id for orchestration result is @orchestrationResult.Id</h2>
   <a href="@orchestrationResult.StatusQueryGetUri" class="btn btn-primary">See JSON</a>
   <div id="orchestrationStatus"></div>
-  <script>
-    function refresh() {
-      var urlToCall = encodeURIComponent('@orchestrationResult.StatusQueryGetUri');
-      $.ajax({
-        type: 'GET',
-        url: '/OrchestrationStatus?url=' + urlToCall,
-        success: function(result) {
-          $("#orchestrationStatus").html(result);
-          setTimeout(refresh, 500);
-        },
-        error: function(error) {
-          setTimeout(refresh, 500);
-          console.log(error);
-        }
-      })
-    }
-
-    refresh();
-  </script>
 }
 @section Scripts {
   <script>

@@ -22,7 +22,7 @@ namespace LeosAmazingAsynchrony.Pages
             _functionsUrl = options.Value.FunctionsAppUrl;
             var account = CloudStorageAccount.Parse(options.Value.ConnectionStrings.StorageAccountConnectionString);
             var blobClient = account.CreateCloudBlobClient();
-            _cloudBlobContainer = blobClient.GetContainerReference("uploadedFiles");
+            _cloudBlobContainer = blobClient.GetContainerReference("uploaded-files");
         }
 
         public void OnGet()
@@ -52,7 +52,7 @@ namespace LeosAmazingAsynchrony.Pages
                 }
                 using (var client = new HttpClient())
                 {
-                    var result = await client.GetAsync(_functionsUrl);
+                    var result = await client.GetAsync($"{_functionsUrl}?fileId={uniqueId}");
                     var orchestrationStartResult = await result.Content.ReadAsAsync<OrchestrationStartResult>();
                     Console.WriteLine(orchestrationStartResult.Id);
                     ViewData.Add("OrchestrationResult", orchestrationStartResult);

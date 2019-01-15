@@ -28,3 +28,9 @@
     </tr>
   </tbody>
 </table>
+
+@if (@Model.QueryResult.RuntimeStatus == "Completed")
+{
+  var resultsFileUrl = Model.ResultsFileUrl + "/" + Model.QueryResult.Output;
+  <a href='@resultsFileUrl' class="btn btn-primary" download>Download Results File</a>
+}

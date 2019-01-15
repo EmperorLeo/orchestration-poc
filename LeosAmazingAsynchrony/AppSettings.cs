@@ -3,6 +3,7 @@ namespace LeosAmazingAsynchrony
     public class AppSettings
     {
         public string FunctionsAppUrl { get; set; }
+        public string ResultsFileUrl { get; set; }
         public AppConnectionStrings ConnectionStrings { get; set; }
 
         public class AppConnectionStrings
